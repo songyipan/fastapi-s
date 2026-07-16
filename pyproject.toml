@@ -1,0 +1,24 @@
+[project]
+name = "fastapi-s"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = []
+
+
+[tool.uv.workspace]
+members = [
+    "packages/*",
+    "apps/*",
+]
+
+[dependency-groups]
+dev = [
+    "debugpy>=1.8.21",
+]
+
+[tool.basedpyright]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.14"
