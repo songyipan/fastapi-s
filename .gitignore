@@ -18,3 +18,8 @@ wheels/
 Thumbs.db
 *.swp
 .idea/
+
+
+# temp
+/temp
+/tmp

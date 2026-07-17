@@ -1,3 +1,4 @@
+# model/association/product_category.py
 from sqlalchemy import Column, ForeignKey, Table
 
 from app.model.base import Base

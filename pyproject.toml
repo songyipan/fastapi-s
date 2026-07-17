@@ -31,3 +31,7 @@ extraPaths = ["apps/web-service"]
 
 [tool.pylint.messages_control]
 disable = ["global-statement"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["test"]

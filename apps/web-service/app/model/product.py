@@ -1,3 +1,4 @@
+# model/product.py
 from typing import TYPE_CHECKING
 
 from sqlalchemy import String, Text

@@ -24,3 +24,7 @@ db-downgrade:
 # 同步依赖包指令
 sync-web-service:
 	uv sync --package web-service
+
+
+test:
+	uv run pytest apps/web-service/test/integration/ -v

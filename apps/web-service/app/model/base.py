@@ -1,13 +1,14 @@
 # model/base.py
 from datetime import datetime
 
-from sqlalchemy import DateTime, Identity
+from sqlalchemy import DateTime, Identity, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, declared_attr, mapped_column
-from sqlalchemy.sql.functions import now
 
 
 class Base(DeclarativeBase):
-    __tablename__ = declared_attr.directive(lambda cls: cls.__name__.lower())
+    @declared_attr.directive
+    def __tablename__(cls) -> str:
+        return cls.__name__.lower()
 
 
 class IDMixin:
@@ -15,7 +16,7 @@ class IDMixin:
 
 
 class TimestampMixin:
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=now())
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, server_default=now(), onupdate=now()
+        DateTime, server_default=func.now(), onupdate=func.now()
     )
