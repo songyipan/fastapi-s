@@ -1,6 +1,6 @@
 # Makefile
 
-.PHONY: dev debug db-migrate db-upgrade db-downgrade
+.PHONY: dev debug db-migrate db-upgrade db-downgrade sync-web-service
 
 dev:
 	export PYTHONDONTWRITEBYTECODE=1; \
@@ -18,3 +18,9 @@ db-upgrade:
 
 db-downgrade:
 	uv run --package web-service alembic -c apps/web-service/alembic.ini downgrade $(version)
+
+
+
+# 同步依赖包指令
+sync-web-service:
+	uv sync --package web-service
