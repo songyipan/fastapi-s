@@ -4,8 +4,12 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "web-service",
+]
 
+[tool.uv.sources]
+web-service = { workspace = true }
 
 [tool.uv.workspace]
 members = [
@@ -16,9 +20,14 @@ members = [
 [dependency-groups]
 dev = [
     "debugpy>=1.8.21",
+    "pylint>=3.3.0",
 ]
 
 [tool.basedpyright]
 venvPath = "."
 venv = ".venv"
 pythonVersion = "3.14"
+extraPaths = ["apps/web-service"]
+
+[tool.pylint.messages_control]
+disable = ["global-statement"]
