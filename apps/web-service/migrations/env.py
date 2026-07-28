@@ -1,3 +1,8 @@
+"""Alembic migration environment."""
+
+# Alembic 在运行时向 context 注入成员，静态分析器无法识别。
+# pylint: disable=no-member
+
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
@@ -5,13 +10,10 @@ from sqlalchemy import engine_from_config, pool
 from alembic import context
 from app.core.config import db_settings
 from app.model.base import Base
-import app.model  # noqa: F401  # 注册模型到 Base.metadata
+import app.model  # noqa: F401  # pylint: disable=unused-import
 
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
 config = context.config
 
-# 用 .env / db_settings 覆盖 alembic.ini 里的占位 URL（同步驱动给 Alembic 用）
 config.set_main_option(
     "sqlalchemy.url",
     (
@@ -20,7 +22,6 @@ config.set_main_option(
     ),
 )
 
-# Interpret the config file for Python logging.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
@@ -28,7 +29,6 @@ target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode."""
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
@@ -42,7 +42,6 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode."""
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",

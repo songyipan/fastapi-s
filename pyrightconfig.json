@@ -2,5 +2,5 @@
   "venvPath": ".",
   "venv": ".venv",
   "pythonVersion": "3.14",
-  "extraPaths": ["apps/web-service"]
+  "extraPaths": ["apps/web-service", "packages/duyi-utils/src"]
 }

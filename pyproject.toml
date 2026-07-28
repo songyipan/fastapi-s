@@ -10,6 +10,7 @@ dependencies = [
 
 [tool.uv.sources]
 web-service = { workspace = true }
+duyi-utils = { workspace = true }
 
 [tool.uv.workspace]
 members = [
@@ -21,17 +22,25 @@ members = [
 dev = [
     "debugpy>=1.8.21",
     "pylint>=3.3.0",
+    "httpx==0.28.1",
+    "pytest==9.1.1",
+    "pytest-asyncio==1.4.0",
+    "pytest-cov==7.0.0",
+    "python-dotenv>=1.2.2",
+    "duyi-utils",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = [
+    "smoke: 标记为冒烟测试，验证核心流程是否正常",
 ]
 
 [tool.basedpyright]
 venvPath = "."
 venv = ".venv"
 pythonVersion = "3.14"
-extraPaths = ["apps/web-service"]
+extraPaths = ["apps/web-service", "packages/duyi-utils/src"]
 
 [tool.pylint.messages_control]
 disable = ["global-statement"]
-
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-testpaths = ["test"]

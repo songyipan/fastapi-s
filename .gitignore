@@ -12,6 +12,7 @@ wheels/
 # Environment / secrets
 .env
 .env.local
+.env.test
 
 # OS / editor
 .DS_Store
@@ -23,3 +24,8 @@ Thumbs.db
 # temp
 /temp
 /tmp
+
+# test
+.coverage
+.coverage.*
+htmlcov/
