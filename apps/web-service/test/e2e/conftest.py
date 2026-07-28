@@ -5,12 +5,11 @@ import subprocess
 from pathlib import Path
 from contextlib import contextmanager
 
-# ─── 必须在任何 app 导入之前设置环境变量 ───
-
 from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parent.parent.parent.parent.parent / ".env.test")
 os.environ["DB_NAME"] = "duyi_e2e_db"
+os.environ.setdefault("WEB_JWT_SECRET_KEY", "test-jwt-secret-key")
 
 from app.core.config import db_settings
 
@@ -18,9 +17,13 @@ import pytest
 import psycopg2
 
 TEST_SERVER_PORT = "18000"
+MOCK_AI_PORT = "18001"
 
 _server_process: subprocess.Popen | None = None
 _log_file = None
+
+_mock_ai_process: subprocess.Popen | None = None
+_mock_ai_log_file = None
 
 
 @contextmanager
@@ -86,6 +89,49 @@ def _stop_server():
         _log_file = None
 
 
+def _start_mock_ai_server():
+    global _mock_ai_process, _mock_ai_log_file
+    tmp_dir = Path(__file__).resolve().parent.parent.parent.parent.parent / "tmp"
+    tmp_dir.mkdir(exist_ok=True)
+    _mock_ai_log_file = open(tmp_dir / "mock_ai_server.log", "w")
+    _mock_ai_process = subprocess.Popen(
+        [
+            "uv",
+            "run",
+            "--package",
+            "web-service",
+            "python",
+            str(Path(__file__).resolve().parent / "mock_ai_server.py"),
+            MOCK_AI_PORT,
+        ],
+        stdout=_mock_ai_log_file,
+        stderr=subprocess.STDOUT,
+    )
+    import httpx
+
+    for _ in range(50):
+        try:
+            resp = httpx.get(f"http://localhost:{MOCK_AI_PORT}/health")
+            if resp.status_code == 200:
+                break
+        except Exception:
+            pass
+        time.sleep(0.1)
+    else:
+        raise RuntimeError("Mock AI 服务器启动超时")
+
+
+def _stop_mock_ai_server():
+    global _mock_ai_process, _mock_ai_log_file
+    if _mock_ai_process is not None:
+        _mock_ai_process.terminate()
+        _mock_ai_process.wait(timeout=10)
+        _mock_ai_process = None
+    if _mock_ai_log_file is not None:
+        _mock_ai_log_file.close()
+        _mock_ai_log_file = None
+
+
 def pytest_sessionstart(session):
     with _create_cur() as cur:
         cur.execute(
@@ -100,9 +146,9 @@ def pytest_sessionstart(session):
     from alembic.config import Config
     from alembic import command
 
-    WEB_SERVICE_DIR = Path(__file__).resolve().parent.parent.parent
+    web_service_dir = Path(__file__).resolve().parent.parent.parent
     alembic_cfg = Config()
-    alembic_cfg.set_main_option("script_location", str(WEB_SERVICE_DIR / "migrations"))
+    alembic_cfg.set_main_option("script_location", str(web_service_dir / "migrations"))
     alembic_cfg.set_main_option(
         "sqlalchemy.url",
         f"postgresql://{db_settings.user}:{db_settings.password}@{db_settings.host}:{db_settings.port}/{db_settings.name}",
@@ -110,9 +156,11 @@ def pytest_sessionstart(session):
     command.upgrade(alembic_cfg, "head")
 
     _start_server()
+    _start_mock_ai_server()
 
 
 def pytest_sessionfinish(session, exitstatus):
+    _stop_mock_ai_server()
     _stop_server()
 
     with _create_cur() as cur:
@@ -138,12 +186,42 @@ def base_url():
     return f"http://localhost:{TEST_SERVER_PORT}"
 
 
+@pytest.fixture(scope="session")
+def mock_ai_base_url():
+    return f"http://localhost:{MOCK_AI_PORT}"
+
+
 @pytest.fixture
 async def async_client():
     from httpx import AsyncClient
 
     async with AsyncClient(base_url=f"http://localhost:{TEST_SERVER_PORT}") as client:
         yield client
+
+
+REGISTER_URL = "/api/auth/register"
+LOGIN_URL = "/api/auth/login"
+
+
+async def _register_and_login(client) -> str:
+    await client.post(
+        REGISTER_URL,
+        json={"username": "e2etestuser", "password": "test123456"},
+    )
+    resp = await client.post(
+        LOGIN_URL,
+        json={"username": "e2etestuser", "password": "test123456"},
+    )
+    return resp.json()["data"]["access_token"]
+
+
+@pytest.fixture
+async def auth_headers(async_client):
+    token = await _register_and_login(async_client)
+    return {"Authorization": f"Bearer {token}"}
+
+
+_SKIP_CLEANUP_TABLES = {"settinggroup", "setting"}
 
 
 @pytest.fixture(autouse=True)
@@ -162,6 +240,8 @@ async def cleanup_db(async_client):
 
     async with engine.begin() as conn:
         for table in reversed(Base.metadata.sorted_tables):
+            if table.name in _SKIP_CLEANUP_TABLES:
+                continue
             await conn.execute(
                 text(f'TRUNCATE TABLE "{table.name}" RESTART IDENTITY CASCADE')
             )

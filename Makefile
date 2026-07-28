@@ -1,10 +1,13 @@
 # Makefile
 
-.PHONY: dev debug test test-unit test-integration test-e2e test-smoke db-migrate db-upgrade db-downgrade db-reset db-init
+.PHONY: dev debug dev-web test test-unit test-integration test-e2e test-smoke db-migrate db-upgrade db-downgrade db-reset db-init
 
 dev:
 	export PYTHONDONTWRITEBYTECODE=1; \
 	uv run --package web-service fastapi dev apps/web-service/app/main.py --port 8080
+
+dev-web:
+	cd demo/web-demo && npm install && npm run dev
 
 debug:
 	export PYTHONDONTWRITEBYTECODE=1; \
@@ -47,5 +50,11 @@ db-init: db-reset
 	rm -f apps/web-service/migrations/versions/*.py
 	uv run --package web-service alembic -c apps/web-service/alembic.ini revision --autogenerate -m "init"
 	uv run --package web-service alembic -c apps/web-service/alembic.ini upgrade head
+
+db-seed:
+	uv run --package web-service python apps/web-service/scripts/seed_products.py
+
+db-seed-force:
+	uv run --package web-service python apps/web-service/scripts/seed_products.py --force
 
 

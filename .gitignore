@@ -25,6 +25,10 @@ Thumbs.db
 /temp
 /tmp
 
+# frontend
+demo/web-demo/node_modules
+demo/web-demo/dist
+
 # test
 .coverage
 .coverage.*

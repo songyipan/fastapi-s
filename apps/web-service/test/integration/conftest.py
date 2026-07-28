@@ -7,6 +7,10 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parent.parent.parent.parent.parent / ".env.test")
 os.environ["DB_NAME"] = "duyi_integration_test_db"
+os.environ.setdefault("WEB_JWT_SECRET_KEY", "test-jwt-secret-key")
+os.environ.setdefault("AI_API_KEY", "test-api-key")
+os.environ.setdefault("AI_BASE_URL", "http://localhost:18001")
+os.environ.setdefault("AI_MODEL", "mock-model")
 
 from app.core.config import db_settings
 
@@ -96,6 +100,22 @@ async def db_session():
         yield session
 
     await engine.dispose()
+
+
+@pytest.fixture
+async def auth_token(db_session):
+    from app.schema.user import UserLogin, UserRegister
+    from app.service.user_service import UserService
+
+    svc = UserService(db_session)
+    await svc.register(UserRegister(username="testuser", password="test123456"))
+    result = await svc.login(UserLogin(username="testuser", password="test123456"))
+    return result.access_token
+
+
+@pytest.fixture
+def auth_headers(auth_token):
+    return {"Authorization": f"Bearer {auth_token}"}
 
 
 @pytest.fixture

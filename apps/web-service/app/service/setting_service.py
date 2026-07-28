@@ -31,6 +31,19 @@ class SettingGroupDef:
 
 SETTINGS_DTO: list[SettingGroupDef] = [
     SettingGroupDef(
+        key="jwt",
+        display_name="JWT配置",
+        description="JWT令牌相关配置",
+        settings=[
+            SettingDef(
+                key="jwt_expire_minutes",
+                value="120",
+                display_name="JWT过期时间",
+                description="JWT令牌过期时间，单位为分钟，默认 120 分钟（2小时）",
+            ),
+        ],
+    ),
+    SettingGroupDef(
         key="aliyun_oss",
         display_name="阿里云OSS上传设置",
         description="阿里云OSS对象存储上传配置",
@@ -64,6 +77,31 @@ SETTINGS_DTO: list[SettingGroupDef] = [
                 value="",
                 display_name="自定义域名",
                 description="可选：自定义域名/CDN域名，留空则使用默认域名",
+            ),
+        ],
+    ),
+    SettingGroupDef(
+        key="ai",
+        display_name="AI配置",
+        description="AI服务相关配置",
+        settings=[
+            SettingDef(
+                key="ai_api_key",
+                value="",
+                display_name="AI API Key",
+                description="AI服务的API密钥",
+            ),
+            SettingDef(
+                key="ai_base_url",
+                value="",
+                display_name="AI Base URL",
+                description="AI服务的接口地址，例如 https://api.deepseek.com",
+            ),
+            SettingDef(
+                key="ai_model",
+                value="",
+                display_name="AI Model",
+                description="AI模型名称",
             ),
         ],
     ),
@@ -170,6 +208,8 @@ class SettingService(BaseService):
             .order_by(SettingGroup.id)
         )
         groups = result.unique().scalars().all()
+        for g in groups:
+            g.settings.sort(key=lambda s: s.id)
         return [SettingGroupResponse.model_validate(g) for g in groups]
 
     async def update_settings(

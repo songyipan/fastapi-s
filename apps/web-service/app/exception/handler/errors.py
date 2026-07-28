@@ -5,13 +5,17 @@
 
 from fastapi.exceptions import RequestValidationError
 
+from app.exception.ai import AiException
+from app.exception.auth import AuthException
 from app.exception.database import DatabaseException
 from app.exception.not_found import NotFoundException
 
 ERROR_MAP: dict[type, tuple[str, int, str]] = {
     RequestValidationError: ("422001", 422, "数据验证错误"),
     DatabaseException: ("422002", 422, "数据验证错误"),
+    AiException: ("422004", 422, "AI异常"),
     NotFoundException: ("404001", 404, "资源不存在"),
+    AuthException: ("401001", 401, "认证失败"),
     Exception: ("500001", 500, "服务器内部错误"),
 }
 
